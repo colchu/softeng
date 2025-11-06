@@ -7,7 +7,7 @@
     "test": "tests"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest"
   },
   "repository": {
     "type": "git",
@@ -16,12 +16,16 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
+  "scripts": {
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
+  },
   "bugs": {
     "url": "https://github.com/colchu/softeng/issues"
   },
   "homepage": "https://github.com/colchu/softeng#readme",
   "devDependencies": {
+    "jest": "^30.2.0",
     "jsdom": "^27.0.1",
     "vitest": "^3.2.4"
   }
