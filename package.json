@@ -7,7 +7,7 @@
     "test": "tests"
   },
   "scripts": {
-    "test": "jest"
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
   },
   "repository": {
     "type": "git",
@@ -17,14 +17,12 @@
   "author": "",
   "license": "ISC",
   "type": "module",
-  "scripts": {
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
-  },
   "bugs": {
     "url": "https://github.com/colchu/softeng/issues"
   },
   "homepage": "https://github.com/colchu/softeng#readme",
   "devDependencies": {
+    "cypress": "^15.7.1",
     "jest": "^30.2.0",
     "jsdom": "^27.0.1",
     "vitest": "^3.2.4"
