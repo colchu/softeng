@@ -1,4 +1,47 @@
-# softeng
+# Colin's README
+User
+Nick, a physics teacher, joined the Nueva community recently. He is adjusting to writing personal narratives for each of his students at the end of each semester. He appreciates working on his communication skills and enjoys the process of writing evaluations as a way of supporting his students.
+
+Problem Context
+Nick can find it difficult to say something unique about each student. He aims to be specific in his evaluations and wants to mention particular moments during the semester that stood out to him about the student. Without a way to keep track of the smaller things that students do, he is likely to forget when it comes time to write narratives.
+
+Solution
+The NarrativeNook app will help Nick easily track moments in his classes that were illuminating, meaningful, or noteworthy. He will be able to enter short notes about specific students each day, and, at the end of the semester, he will be able to export the cumulative notes for each student. This would be different than if a teacher just had a document or spreadsheet for student note-taking, as the app would allow Nick to easily select which unit, project, or MA he is referring to while taking the notes; in addition, the export feature will create an easy transition from note-taking to narrative-writing as opposed to a manual copy-and-paste for each student.
+
+Outcome
+The NarrativeNook will allow Nick to have a much more efficient narrative-writing process. In class, he won’t have to spend much time organizing or keeping track of his notes, and by the end of the semester, he will already have a head start on writing the evaluations.
+
+Need Statement
+Nick, a teacher at Nueva who enjoys writing narratives but often finds it difficult to remember specific moments from classes, needs a solution that allows him to efficiently write down notes throughout the semester on each student and use them easily and effectively while writing narratives. NarrativeNook would allow for Nick to jot down specific insights from students in class and export those notes for each student—across various parts of the semester—for narrative writing.
+
+Documentation
+- There are three modules: 
+        utils.js: IDs, formatting, parsing, roster clearing / just the smaller things
+        storage.js: reading/writing app state from localStorage
+        app.js: main UI controller
+- We have an object, state:
+        classes have an ID, name, block, color, and roster
+        quick adding a note is done with ID, timestamp, classID, students, note
+- Utility functions are:
+        cid(): short random string ID for classes and notes.
+        fmtDate(ts): formats a timestamp into a human-readable date
+        escapeHtml(s): escapes the & < > " ' so that basically the notes and names become html
+	    csvEscape(v): escapes values for CSV
+        parseStudentNames(rawText): splits and also cleans lines
+        clearRoster(classObject): the clear roster button
+
+Future features
+1. An AI synthesizer that simplifies and summarizes notes that are written by the user
+2. The user can edit current notes
+3. The user can change the timestamp of notes if they are writing a class that happened earlier in the day or week
+4.  Enhanced user interface with password and profile feature
+
+Bugs
+1. the storage for the loadState() for saved data is sometimes not apparent when the site is re-opened
+2. state.students is updated when adding students but usually it is not cleaned when the class is deleted
+3. clearRoster currently only empties classObject.roster --> tho it leaves state.students untouched
+
+# Penelope's README
 A website that allows teachers to record notes on classes and students for a simplified and efficient narrative-writing process.
 Penelope's branch of Colin's code
 
