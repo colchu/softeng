@@ -170,15 +170,17 @@
         <!-- goes back without page reload -->
         <a class="back" href="#/">← Back to Dashboard</a>
       </div>
-
+    
       <!-- roster management -->
       <section class="card">
         <div class="section-title">
           <h2>Roster</h2>
+          <button class="btn btn-outline btn-danger" id="clearRosterBtn" style="--danger:#d95050;font-weight:600;">Clear All</button>
           <div class="mini" id="rosterCount">0 students</div>
         </div>
-        <!-- current roster as removable chips -->
+        
         <div class="field" id="rosterChips" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+
         <div class="field">
           <label class="label" for="newStudent">Add Student</label>
           <div class="row">
@@ -186,6 +188,17 @@
             <button class="btn" id="addStudent">Add</button>
           </div>
           <p class="mini" style="margin-top:8px">Removing a student here removes them from this class only.</p>
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="field">
+          <label class="label" for="newStudents">Add Students (Bulk)</label>
+          <textarea id="newStudents" placeholder="Paste a list of student names, or a roster export where names are repeated."></textarea>
+          <div class="row" style="margin-top:10px">
+            <button class="btn" id="addStudentsBtn">Add Students from List</button>
+          </div>
+          <p class="mini" style="margin-top:8px">Existing names will be skipped automatically.</p>
         </div>
       </section>
 
@@ -198,7 +211,7 @@
         </div>
         <div class="field">
           <span class="label">Select Student(s)</span>
-          <!-- checkbox list (not a multi-select) -->
+          <!-- checkbox list -->
           <div id="noteStudentChecks" class="checks" aria-live="polite"></div>
 
           <label class="label" for="noteText" style="margin-top:12px">Note</label>
@@ -211,11 +224,17 @@
         </div>
       </section>
 
-      <!-- recent notes for this class -->
+      <!-- recent notes for this class, with student filter -->
       <section class="card">
         <div class="section-title">
           <h2>Recent Notes</h2>
-          <button class="btn btn-outline" id="refresh">Refresh</button>
+          <div class="row" style="align-items:center;gap:8px;justify-content:flex-end;flex-wrap:wrap">
+            <label class="mini" for="noteFilter" style="margin:0">Filter by student</label>
+            <select id="noteFilter" style="max-width:220px">
+              <option value="">All students</option>
+            </select>
+            <button class="btn btn-outline" id="refresh">Refresh</button>
+          </div>
         </div>
         <div id="entries"></div>
       </section>
@@ -283,13 +302,17 @@
   const subtitle = document.getElementById('subtitle');
   const rosterChips = document.getElementById('rosterChips');
   const rosterCount = document.getElementById('rosterCount');
+  const clearRosterBtn = document.getElementById('clearRosterBtn');
   const newStudent = document.getElementById('newStudent');
   const addStudent = document.getElementById('addStudent');
+  const newStudents = document.getElementById('newStudents');
+  const addStudentsBtn = document.getElementById('addStudentsBtn');
   const noteStudentChecks = document.getElementById('noteStudentChecks'); // where checkboxes go
   const noteText = document.getElementById('noteText');
   const saveNote = document.getElementById('saveNote');
   const noteStatus = document.getElementById('noteStatus');
   const clearNote = document.getElementById('clearNote');
+  const noteFilter = document.getElementById('noteFilter');
   const refresh = document.getElementById('refresh');
   const entries = document.getElementById('entries');
   const scrollToClasses = document.getElementById('scrollToClasses');
@@ -396,7 +419,8 @@
     subtitle.textContent = 'Class Page';
     renderRoster(cls);
     renderNoteStudentChecks(cls); // set up checkboxes for note
-    renderEntries(cls);
+    setupNoteFilter(cls);         // set up student filter in notes
+    renderEntries(cls);           // render notes with current filter
   }
 
   // show roster as chips with remove buttons
@@ -411,6 +435,8 @@
         save();
         renderRoster(cls);
         renderNoteStudentChecks(cls);
+        setupNoteFilter(cls);
+        renderEntries(cls);
       });
       rosterChips.appendChild(chip);
     });
@@ -430,25 +456,174 @@
     });
   }
 
-  // list recent notes for this class
+  // populate the "Filter by student" dropdown for this class
+  function setupNoteFilter(cls){
+    if (!noteFilter) return;
+
+    // Remember the previous selection so it doesn't reset every time
+    const previousValue = noteFilter.value;
+
+    // Gather all possible names:
+    //  - current roster
+    //  - any students tagged in notes for this class (even if not in roster)
+    const nameSet = new Set();
+
+    (cls.roster || []).forEach(n => nameSet.add(n));
+
+    (state.quickAdds || [])
+      .filter(e => e.classId === cls.id)
+      .forEach(e => {
+        (e.students || []).forEach(s => nameSet.add(s));
+      });
+
+    const names = Array.from(nameSet).sort((a, b) => a.localeCompare(b));
+
+    // Rebuild the select options
+    noteFilter.innerHTML = '';
+    noteFilter.add(new Option('All students', ''));
+
+    names.forEach(name => {
+      noteFilter.add(new Option(name, name));
+    });
+
+    // Option for notes with no student tags
+    noteFilter.add(new Option('Untagged notes', '__untagged'));
+
+    // Try to restore previous selection if still valid
+    const values = Array.from(noteFilter.options).map(o => o.value);
+    if (values.includes(previousValue)) {
+      noteFilter.value = previousValue;
+    } else {
+      noteFilter.value = '';
+    }
+  }
+
+  // list recent notes for this class, filtered by selected student (if any)
   function renderEntries(cls){
     entries.innerHTML = '';
-    const list = (state.quickAdds||[]).filter(e=>e.classId===cls.id).slice(0,25);
-    if(list.length===0){
-      entries.innerHTML = '<div class="field"><span class="mini">No notes yet.</span></div>';
+
+    const selected = noteFilter ? noteFilter.value : '';
+
+    let list = (state.quickAdds || []).filter(e => e.classId === cls.id);
+
+    if (selected) {
+      if (selected === '__untagged') {
+        // Only notes with no students or empty array
+        list = list.filter(e => !e.students || e.students.length === 0);
+      } else {
+        // Notes where the selected student is tagged
+        list = list.filter(e => (e.students || []).includes(selected));
+      }
+    }
+
+    // Limit to 25 most recent
+    list = list.slice(0, 25);
+
+    if (list.length === 0) {
+      const label =
+        selected === '__untagged'
+          ? 'No untagged notes yet.'
+          : selected
+          ? `No notes found for ${escapeHtml(selected)}.`
+          : 'No notes yet.';
+      entries.innerHTML = `<div class="field"><span class="mini">${label}</span></div>`;
       return;
     }
+
     list.forEach(e=>{
       const div = document.createElement('div');
       div.className = 'entry';
       const students = (e.students||[]).join(', ') || '—';
       const note = e.note || '—';
-      div.innerHTML = `<div class="date">${fmtDate(e.ts)}</div><div>${escapeHtml(note)}</div><div class="mini" style="margin-top:4px">Students: ${escapeHtml(students)}</div>`;
+      div.innerHTML =
+        `<div class="date">${fmtDate(e.ts)}</div>` +
+        `<div>${escapeHtml(note)}</div>` +
+        `<div class="mini" style="margin-top:4px">Students: ${escapeHtml(students)}</div>`;
       entries.appendChild(div);
     });
   }
 
-  // ===== events (ui actions) =====
+  // ADDED PARSER FUNCTION
+  /**
+   * cleans up a list copy pasted from the canvas roster
+   * a line is a "name" if the *very next line* starts with it.
+   * also can take simple lists
+   * checks for names - > only a name if it has first and last name, no weird characters or symbols
+   */
+  function parseStudentNames(rawText) {
+    const names = new Set();
+    const lines = rawText.split('\n')
+      .map(l => l.trim())
+      .filter(l => l.length > 0);
+
+    if (lines.length === 0) {
+      return [];
+    }
+
+    // checks if something is actually a name
+    const isPlausibleName = (line) => {
+      if (!line) return false;
+      
+      const trimmedLine = line.trim();
+      const wordCount = trimmedLine.split(' ').length;
+
+      // checks 2-5 words in name, also has to have proper capitalization
+      if (
+        wordCount < 2 ||
+        wordCount > 5 ||
+        !/^[A-Z]/.test(trimmedLine) ||
+        trimmedLine.startsWith('Student') ||
+        trimmedLine.startsWith('Teacher')
+      ) {
+        return false;
+      }
+      
+      // no numbers/weird characters
+      if (/\d/.test(trimmedLine)) {
+        return false;
+      }
+      if (/[@:/]/.test(trimmedLine)) {
+        return false;
+      }
+      // only letters and spaces and hyphen ' -
+      if (!/^[A-Za-z' -]+$/.test(trimmedLine)) {
+        return false;
+      }
+
+      return true;
+    };
+
+    for (let i = 0; i < lines.length; i++) {
+      const currentLine = lines[i];
+      const nextLine = lines[i + 1]; 
+
+      // -----
+      // using pattern of canvas roster where the name is repeated 2x
+      if (nextLine && nextLine.startsWith(currentLine) && nextLine !== currentLine) {
+        if (isPlausibleName(currentLine)) {
+          names.add(currentLine);
+        }
+        i++; 
+        continue;
+      }
+
+      const roleRegex = /^(Student|Teacher)([A-Z][A-Za-z-' ]+)/;
+      const roleMatch = currentLine.match(roleRegex);
+      if (roleMatch && roleMatch[2]) {
+        const extractedName = roleMatch[2].trim();
+        if (isPlausibleName(extractedName)) { 
+          names.add(extractedName);
+        }
+        continue; 
+      }
+
+      if (isPlausibleName(currentLine)) {
+        names.add(currentLine);
+      }
+    }
+
+    return Array.from(names);
+  }
 
   // rename the user
   editNameBtn.addEventListener('click', ()=>{
@@ -535,6 +710,67 @@
     save();
     renderRoster(cls);
     renderNoteStudentChecks(cls);
+    setupNoteFilter(cls);
+    renderEntries(cls);
+  });
+
+  // add multiple students from bulk paste
+  addStudentsBtn.addEventListener('click', () => {
+    const route = getRoute(); 
+    if (route.name !== 'class') return;
+    
+    const cls = state.classes.find(c => c.id === route.id); 
+    if (!cls) return;
+
+    const rawText = newStudents.value;
+    const names = parseStudentNames(rawText);
+    
+    let addedCount = 0;
+    cls.roster = cls.roster || [];
+    state.students = state.students || [];
+    names.forEach(name => {
+      const val = name.trim();
+
+      if (val && !cls.roster.includes(val)) {
+        cls.roster.push(val);
+        addedCount++;
+
+        if (!state.students.includes(val)) {
+          state.students.push(val);
+        }
+      }
+    });
+
+    // only save if added someone
+    if (addedCount > 0) {
+      save(); 
+      renderRoster(cls);
+      renderNoteStudentChecks(cls);
+      setupNoteFilter(cls);
+      renderEntries(cls);
+    }
+    // clear text area
+    newStudents.value = '';
+  });
+
+  // clear roster button
+  clearRosterBtn.addEventListener('click', () => {
+    const route = getRoute(); 
+    if (route.name !== 'class') return;
+    
+    const cls = state.classes.find(c => c.id === route.id); 
+    if (!cls) return;
+
+    // ask for confirmation
+    if (confirm(`Are you sure you want to remove all ${cls.roster.length} students from this class?\n\nThis cannot be undone.`)) {
+      cls.roster = []; // Empty the roster
+      save(); // Save the change
+      
+      renderRoster(cls);
+      renderNoteStudentChecks(cls);
+      setupNoteFilter(cls);
+      renderEntries(cls);
+    }
   });
 
   // save class note (checkbox selection)
@@ -547,6 +783,7 @@
     save();
     noteText.value = '';
     noteStudentChecks.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.checked=false);
+    setupNoteFilter(cls);
     renderEntries(cls);
     noteStatus.textContent = 'saved';
     setTimeout(()=> noteStatus.textContent = '', 1500);
@@ -558,6 +795,19 @@
     noteStudentChecks.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.checked=false);
     noteStatus.textContent='';
   });
+
+  // change filter -> re-render entries for current class
+  if (noteFilter) {
+    noteFilter.addEventListener('change', () => {
+      const route = getRoute();
+      if (route.name === 'class') {
+        const cls = state.classes.find(c => c.id === route.id);
+        if (cls) {
+          renderEntries(cls);
+        }
+      }
+    });
+  }
 
   // manual refresh of recent notes list
   refresh.addEventListener('click', ()=>{
