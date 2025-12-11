@@ -32,19 +32,20 @@ Documentation
 
 Future features
 1. P1
-        Enhanced user interface with password and profile feature
-        An AI synthesizer that simplifies and summarizes notes that are written by the user
+	Enhanced user interface with password and profile feature
+	An AI synthesizer that simplifies and summarizes notes that are written by the user
 The user can edit current notes
 
-3. The user can change the timestamp of notes if they are writing a class that happened earlier in the day or week
+3. P2
+	The user can change the timestamp of notes if they are writing a class that happened earlier in the day or week
 
 Bugs
 1. P1
-        The storage for the loadState() for saved data is sometimes not apparent when the site is re-opened
-2. state.students is updated when adding students but usually it is not cleaned when the class is deleted
-3. clearRoster currently only empties classObject.roster --> tho it leaves state.students untouched
+   The storage for the loadState() for saved data is sometimes not apparent when the site is re-opened
+	state.students is updated when adding students but usually it is not cleaned when the class is deleted
+	clearRoster currently only empties classObject.roster --> tho it leaves state.students untouched
 
-# Penelope's README
+Penelope's README
 A website that allows teachers to record notes on classes and students for a simplified and efficient narrative-writing process.
 Penelope's branch of Colin's code
 
