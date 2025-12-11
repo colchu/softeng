@@ -31,6 +31,7 @@ Documentation
         clearRoster(classObject): the clear roster button
 
 **Future features**
+
 P1
 1. Enhanced user interface with password and profile feature
 2. The user can edit current notes
@@ -40,6 +41,7 @@ P2
 2. An AI synthesizer that simplifies and summarizes notes that are written by the user
 
 **Bugs**
+
 P1
 1. The storage for the loadState() for saved data is sometimes not apparent when the site is re-opened
 2. state.students is updated when adding students but usually it is not cleaned when the class is deleted
