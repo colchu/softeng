@@ -31,13 +31,16 @@ Documentation
         clearRoster(classObject): the clear roster button
 
 Future features
-1. An AI synthesizer that simplifies and summarizes notes that are written by the user
-2. The user can edit current notes
+1. P1
+        Enhanced user interface with password and profile feature
+        An AI synthesizer that simplifies and summarizes notes that are written by the user
+The user can edit current notes
+
 3. The user can change the timestamp of notes if they are writing a class that happened earlier in the day or week
-4.  Enhanced user interface with password and profile feature
 
 Bugs
-1. the storage for the loadState() for saved data is sometimes not apparent when the site is re-opened
+1. P1
+        The storage for the loadState() for saved data is sometimes not apparent when the site is re-opened
 2. state.students is updated when adding students but usually it is not cleaned when the class is deleted
 3. clearRoster currently only empties classObject.roster --> tho it leaves state.students untouched
 
